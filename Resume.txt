@@ -1,0 +1,53 @@
+# Install dependencies
+!pip install google-generativeai PyPDF2
+
+# Import libraries
+import google.generativeai as genai
+import os
+import PyPDF2
+from google.colab import files
+
+# Step 1: Configure Gemini API (1.5 Pro runs under model name "gemini-pro")
+genai.configure(api_key="AIzaSyAwRjMIwi861y_Wv7J-Mp0nZ3Thi3JuW7s")
+
+# Step 2: Upload resume file (PDF only)
+uploaded = files.upload()
+resume_file = next(iter(uploaded))  # Get the uploaded file name
+
+# Step 3: Extract text from PDF
+def extract_text_from_pdf(file_path):
+    with open(file_path, 'rb') as f:
+        reader = PyPDF2.PdfReader(f)
+        text = ''
+        for page in reader.pages:
+            text += page.extract_text()
+    return text
+
+resume_text = extract_text_from_pdf(resume_file)
+
+# Step 4: Define prompt for evaluation
+prompt = f"""
+You are a professional resume evaluator.
+
+Given the following resume content, provide detailed feedback:
+
+1. A brief summary of the candidate's skills and experience.
+2. Strengths and highlights of the resume.
+3. Areas that need improvement.
+4. Whether the resume is well-suited for the following roles:
+   - Software Developer
+   - Data Scientist
+   - Research Scientist
+   - Other fields (if applicable)
+
+Resume:
+{resume_text}
+"""
+
+# Step 5: Generate feedback using Gemini 1.5 Pro
+model = genai.GenerativeModel(model_name="gemini-2.5-pro-exp-03-25")
+response = model.generate_content(prompt)
+
+# Step 6: Show feedback
+print("=== Resume Feedback ===\n")
+print(response.text)
