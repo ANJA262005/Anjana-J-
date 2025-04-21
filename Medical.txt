@@ -1,0 +1,68 @@
+# ✅ Step 1: Install dependencies
+!pip install -q langchain langchain-community langchain-google-genai faiss-cpu biopython google-generativeai
+
+# ✅ Step 2: Import necessary libraries
+import os
+from langchain_community.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains import RetrievalQA
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from Bio import Entrez
+
+# ✅ Step 3: API keys
+os.environ["GOOGLE_API_KEY"] = "AIzaSyA7zpqJHh1bE8unQJYwYgzud2DJUAuDGoI"  # Replace with your Gemini API key
+Entrez.email = "tarunshot516@gmail.com"  # Replace with your email for PubMed
+
+# ✅ Step 4: Fetch articles from PubMed
+def fetch_pubmed_articles(query, max_results=5):
+    handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
+    record = Entrez.read(handle)
+    ids = record["IdList"]
+    abstracts = []
+    for pmid in ids:
+        fetch = Entrez.efetch(db="pubmed", id=pmid, rettype="abstract", retmode="text")
+        abstract_text = fetch.read()
+        abstracts.append(abstract_text)
+    return abstracts
+
+# ✅ Step 5: Build vector store
+def build_vectorstore_from_articles(articles):
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    texts = text_splitter.create_documents(articles)
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    vectorstore = FAISS.from_documents(texts, embeddings)
+    return vectorstore
+
+# ✅ Step 6: Create Gemini-based QA system
+def create_qa_chain(vectorstore):
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.2)
+    retriever = vectorstore.as_retriever()
+    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
+    return qa_chain
+
+# ✅ Step 7: Ask your question
+def ask_health_question(query, qa_chain):
+    result = qa_chain(query)
+    print("\n🩺 Answer:\n")
+    print(result["result"])
+    print("\n📚 Sources:")
+    for i, doc in enumerate(result["source_documents"]):
+        print(f"\nSource {i+1}:\n{doc.page_content[:500]}...")
+
+# ✅ Step 8: Run everything interactively
+if __name__ == "__main__":
+    user_query = input("💬 Enter your medical/healthcare question: ")
+
+    print("\n🔍 Searching PubMed for related research...")
+    articles = fetch_pubmed_articles(user_query, max_results=5)
+
+    if not articles:
+        print("❌ No articles found on this topic. Try a different question.")
+    else:
+        print("📚 Building knowledge base from PubMed articles...")
+        vectorstore = build_vectorstore_from_articles(articles)
+
+        print("🤖 Connecting to Gemini for answer generation...")
+        qa_chain = create_qa_chain(vectorstore)
+
+        ask_health_question(user_query, qa_chain)
