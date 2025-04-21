@@ -1,0 +1,16 @@
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+
+template = PromptTemplate(input_variables=["history", "human_input"], template="{history}\nHuman: {human_input}\nAI:")
+
+memory = ConversationBufferMemory(memory_key="history")
+
+chain = LLMChain(llm=llm, prompt=template, memory=memory)
+
+def chat_with_memory(user_input):
+    response = chain.run(human_input=user_input)
+    return response
+
+print(chat_with_memory("Tell me a joke!"))
+print(chat_with_memory("Now explain why it's funny."))
