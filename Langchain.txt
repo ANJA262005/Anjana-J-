@@ -1,0 +1,57 @@
+# STEP 1: Install Required Packages with Version Compatibility
+!pip install -q langchain langchain-community wikipedia
+!pip install -q google-generativeai langchain-google-genai
+
+# STEP 2: Import Libraries
+import os
+from langchain_community.chat_models import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain_community.retrievers import WikipediaRetriever
+from langchain.schema import SystemMessage, HumanMessage
+
+# STEP 3: Set your Google API Key (replace with your actual key)
+os.environ["GOOGLE_API_KEY"] = "AIzaSyCE2ip1MjmzD3t0OPUDdLZzHksAHMQDv1U"
+
+# STEP 4: Initialize Gemini (Google Generative AI)
+def get_llm():
+    return ChatGoogleGenerativeAI(
+        model="gemini-1.5-pro-latest",  # Changed to "gemini-pro" as "gemini-1.5-pro-latest" might not be available
+        google_api_key=os.getenv("GOOGLE_API_KEY")
+    )
+
+llm = get_llm()
+
+# STEP 5: Set up Wikipedia Retriever
+wiki = WikipediaRetriever(
+    top_k_results=2,  # Set directly as parameter
+    lang="en"
+)
+
+# STEP 6: Chatbot Function
+def wiki_chatbot(query):
+    # Get Wikipedia content
+    wiki_docs = wiki.get_relevant_documents(query)
+    context = "\n\n".join([doc.page_content for doc in wiki_docs])
+
+    # Prompt messages
+    messages = [
+        SystemMessage(content="You are a helpful assistant who uses Wikipedia content to answer questions."),
+        HumanMessage(content=f"Here is some Wikipedia info:\n\n{context}\n\nNow answer this question: {query}")
+    ]
+
+    # Get LLM response
+    response = llm.invoke(messages)
+    return response.content
+
+# STEP 7: Chat Loop
+print("WikipediaBot is ready! Type 'exit' to quit.\n")
+while True:
+    user_input = input("You: ")
+    if user_input.lower() in ["exit", "quit"]:
+        break
+    try:
+        answer = wiki_chatbot(user_input)
+        print("\nWikipediaBot:", answer, "\n")
+    except Exception as e:
+        print("Error:", e)
