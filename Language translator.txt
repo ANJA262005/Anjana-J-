@@ -1,0 +1,21 @@
+# Step 1: Install googletrans library
+!pip install googletrans==4.0.0-rc1
+
+# Step 2: Import Translator
+from googletrans import Translator
+
+# Step 3: Create a translator object
+translator = Translator()
+
+# Step 4: Tamil text (you can change this)
+tamil_text = "எப்படி இருக்கிறீர்கள்? இன்று 날씨 நல்லது."
+
+# Step 5: Translate from Tamil to English
+translation = translator.translate(tamil_text, src='ta', dest='en')
+
+# Step 6: Show the result
+print("Original Tamil Text:")
+print(tamil_text)
+
+print("\nTranslated English Text:")
+print(translation.text)
