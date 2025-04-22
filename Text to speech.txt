@@ -1,0 +1,18 @@
+# Step 1: Install the gTTS library
+!pip install gTTS
+
+# Step 2: Import the necessary library
+from gtts import gTTS
+from IPython.display import Audio
+
+# Step 3: Define the text you want to convert to speech
+text = "Hello! Welcome to Google Colab text to speech demo."
+
+# Step 4: Convert text to speech
+tts = gTTS(text=text, lang='en')
+
+# Step 5: Save the audio to a file
+tts.save("output.mp3")
+
+# Step 6: Play the audio in Colab
+Audio("output.mp3")
