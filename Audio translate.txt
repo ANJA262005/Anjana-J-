@@ -1,0 +1,33 @@
+# Install the speech recognition library in Colab
+!pip install SpeechRecognition
+
+# Import the required libraries
+import speech_recognition as sr
+from google.colab import files
+
+# Upload audio file
+uploaded = files.upload()
+
+# Initialize recognizer
+r = sr.Recognizer()
+
+# Specify the uploaded audio file
+audio_file = list(uploaded.keys())[0]  # Get the file name of the uploaded file
+
+# Try to recognize the speech from the audio file
+try:
+    # Open the audio file
+    with sr.AudioFile(audio_file) as source:
+        print("Listening to the audio...")
+        audio = r.record(source)  # Capture the entire audio
+
+    # Recognize speech using Google Web Speech API
+    text = r.recognize_google(audio)
+    print("Transcribed Text:\n", text)
+
+except FileNotFoundError:
+    print(f"Error: The file {audio_file} was not found.")
+except sr.UnknownValueError:
+    print("Google Speech Recognition could not understand the audio.")
+except sr.RequestError as e:
+    print(f"Could not request results from Google Speech Recognition service; {e}")
