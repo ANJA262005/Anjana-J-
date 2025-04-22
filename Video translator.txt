@@ -1,0 +1,36 @@
+Open In Colab
+
+# Step 1: Install required packages
+!pip install --upgrade pip
+!pip install moviepy
+!pip install git+https://github.com/openai/whisper.git
+!sudo apt update && sudo apt install ffmpeg -y
+
+# Step 2: Upload video file
+from google.colab import files
+uploaded = files.upload()
+
+# Step 3: Import necessary libraries
+import whisper
+from moviepy.editor import VideoFileClip
+
+# Step 4: Extract audio from uploaded video
+video_path = list(uploaded.keys())[0]
+audio_path = "extracted_audio.wav"
+
+video = VideoFileClip(video_path)
+video.audio.write_audiofile(audio_path)
+
+# Step 5: Load Whisper and transcribe + translate to English
+model = whisper.load_model("base")  # Use "small", "medium", or "large" for better results
+result = model.transcribe(audio_path, task="translate")
+
+# Step 6: Print translated English text
+print("\n--- Translated Text ---\n")
+print(result["text"])
+
+# Step 7 (Optional): Save and download the text as a file
+with open("translated_text.txt", "w") as f:
+    f.write(result["text"])
+
+files.download("translated_text.txt")
